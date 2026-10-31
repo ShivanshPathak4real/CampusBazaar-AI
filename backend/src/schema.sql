@@ -40,6 +40,25 @@ CREATE TABLE IF NOT EXISTS listings (
   status TEXT NOT NULL DEFAULT 'active', -- draft | pending | active | sold | rented | removed
   views INTEGER NOT NULL DEFAULT 0,
   saves INTEGER NOT NULL DEFAULT 0,
+  -- Travel tickets fields
+  ticket_type TEXT, -- Train Ticket | Bus Ticket | Flight Ticket | Other
+  travel_date TEXT, -- YYYY-MM-DD
+  departure_location TEXT,
+  destination_location TEXT,
+  departure_time TEXT,
+  arrival_time TEXT,
+  ticket_quantity INTEGER DEFAULT 1,
+  -- Room / Property rentals fields
+  property_type TEXT, -- Single Room | Shared Room | 1 BHK | 2 BHK | 3 BHK | Other
+  locality TEXT,
+  city TEXT,
+  address TEXT,
+  bedrooms INTEGER,
+  bathrooms INTEGER,
+  furnishing TEXT, -- Furnished | Semi-furnished | Unfurnished
+  available_from TEXT,
+  contact_info TEXT,
+  metadata TEXT DEFAULT '{}',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

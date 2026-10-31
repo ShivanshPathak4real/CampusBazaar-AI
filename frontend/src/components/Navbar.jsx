@@ -5,7 +5,8 @@ import { useAuth } from '../context/AuthContext';
 
 const navLinks = [
   { to: '/browse', label: 'Browse' },
-  { to: '/browse?listingType=rent', label: 'Rent' },
+  { to: '/browse?category=travel-tickets', label: 'Travel Tickets' },
+  { to: '/browse?category=rent-accommodation', label: 'Rentals' },
   { to: '/browse?listingType=exchange', label: 'Exchange' },
   { to: '/sell', label: 'Sell' },
 ];

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { EmptyState, Spinner } from '../../components/Bits';
 
+const PLACEHOLDER = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop';
+
 export default function Saved() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +22,7 @@ export default function Saved() {
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
       {items.map((l) => (
         <Link key={l.id} to={`/listing/${l.id}`} className="block overflow-hidden rounded-lg border border-line bg-white hover:border-ink/30">
-          {l.images[0] && <img src={l.images[0]} alt={l.title} className="aspect-square w-full object-cover" />}
+          <img src={l.images?.[0] || PLACEHOLDER} alt={l.title} className="aspect-square w-full object-cover" />
           <div className="p-3">
             <p className="line-clamp-2 text-sm font-medium">{l.title}</p>
             <p className="mt-1 text-sm font-semibold text-bazaar-600">{l.price ? `₹${l.price.toLocaleString('en-IN')}` : l.rentalPrice ? `₹${l.rentalPrice}` : 'Exchange'}</p>

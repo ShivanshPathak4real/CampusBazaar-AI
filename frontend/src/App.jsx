@@ -14,6 +14,7 @@ import { About, Help, Terms, Privacy, Safety } from './pages/StaticPages';
 import DashboardLayout from './pages/dashboard/DashboardLayout';
 import Overview from './pages/dashboard/Overview';
 import MyListings from './pages/dashboard/MyListings';
+import EditListing from './pages/dashboard/EditListing';
 import Saved from './pages/dashboard/Saved';
 import Transactions from './pages/dashboard/Transactions';
 import Rentals from './pages/dashboard/Rentals';
@@ -46,9 +47,11 @@ export default function App() {
 
         <Route element={<RequireAuth />}>
           <Route path="/profile" element={<Profile />} />
+          <Route path="/listings/:id/edit" element={<EditListing />} />
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Overview />} />
             <Route path="listings" element={<MyListings />} />
+            <Route path="listings/:id/edit" element={<EditListing />} />
             <Route path="saved" element={<Saved />} />
             <Route path="transactions" element={<Transactions />} />
             <Route path="rentals" element={<Rentals />} />

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import db from '../db.js';
 import { optionalAuth } from '../middleware/auth.js';
-import { analyzePricing, buddyReplyForListing, cleanupDescription } from '../utils/ai.js';
+import { analyzePricing, buddyReplyForListing, cleanupDescription, generateBuddyChatReply } from '../utils/ai.js';
 
 const router = Router();
 
@@ -22,10 +22,25 @@ router.post('/improve-description', (req, res) => {
   res.json({ improved: cleanupDescription(description) });
 });
 
-// POST /api/ai/buddy - BazaarBuddy chat about a specific listing
+// POST /api/ai/buddy - BazaarBuddy interactive chat and contextual listing assistant
 router.post('/buddy', optionalAuth, (req, res) => {
-  const { listingId } = req.body;
-  if (!listingId) return res.status(400).json({ error: 'listingId is required' });
+  const { message, listingId, history } = req.body;
+
+  // If a chat message is sent, generate an intelligent conversational reply
+  if (message !== undefined && message !== null) {
+    const result = generateBuddyChatReply({
+      message,
+      listingId,
+      history,
+      user: req.user,
+    });
+    return res.json(result);
+  }
+
+  // Legacy auto-check when opening a specific listing
+  if (!listingId) {
+    return res.status(400).json({ error: 'message or listingId is required' });
+  }
 
   const listing = db.prepare('SELECT * FROM listings WHERE id = ?').get(listingId);
   if (!listing) return res.status(404).json({ error: 'Listing not found' });
@@ -37,7 +52,20 @@ router.post('/buddy', optionalAuth, (req, res) => {
     excludeListingId: listing.id,
   });
   const reply = buddyReplyForListing(listing, analysis);
-  res.json({ reply, analysis });
+  const suggestedPrompts = ['Is this price fair?', 'Tell me about this item', 'Safety checklist', 'How to buy?'];
+  res.json({ reply, analysis, suggestedPrompts });
+});
+
+// POST /api/ai/chat - alias for chat
+router.post('/chat', optionalAuth, (req, res) => {
+  const { message, listingId, history } = req.body;
+  const result = generateBuddyChatReply({
+    message: message || '',
+    listingId,
+    history,
+    user: req.user,
+  });
+  res.json(result);
 });
 
 export default router;

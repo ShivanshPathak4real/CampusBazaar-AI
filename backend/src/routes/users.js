@@ -28,7 +28,7 @@ router.patch('/me', requireAuth, (req, res) => {
 router.get('/me/listings', requireAuth, (req, res) => {
   const rows = db
     .prepare(
-      `SELECT l.*, c.name as category_name FROM listings l
+      `SELECT l.*, c.name as category_name, c.slug as category_slug FROM listings l
        LEFT JOIN categories c ON c.id = l.category_id
        WHERE l.seller_id = ? ORDER BY l.created_at DESC`
     )
@@ -37,7 +37,11 @@ router.get('/me/listings', requireAuth, (req, res) => {
     listings: rows.map((r) => ({
       id: r.id, title: r.title, price: r.price, rentalPrice: r.rental_price,
       images: JSON.parse(r.images || '[]'), status: r.status, listingType: r.listing_type,
-      views: r.views, saves: r.saves, categoryName: r.category_name, createdAt: r.created_at,
+      views: r.views, saves: r.saves, categoryName: r.category_name, categorySlug: r.category_slug,
+      ticketType: r.ticket_type, travelDate: r.travel_date,
+      departureLocation: r.departure_location, destinationLocation: r.destination_location,
+      propertyType: r.property_type, locality: r.locality, city: r.city,
+      createdAt: r.created_at,
     })),
   });
 });
@@ -45,7 +49,7 @@ router.get('/me/listings', requireAuth, (req, res) => {
 router.get('/me/saved', requireAuth, (req, res) => {
   const rows = db
     .prepare(
-      `SELECT l.*, c.name as category_name, u.name as seller_name FROM saved_items s
+      `SELECT l.*, c.name as category_name, c.slug as category_slug, u.name as seller_name FROM saved_items s
        JOIN listings l ON l.id = s.listing_id
        LEFT JOIN categories c ON c.id = l.category_id
        LEFT JOIN users u ON u.id = l.seller_id
@@ -56,7 +60,10 @@ router.get('/me/saved', requireAuth, (req, res) => {
     listings: rows.map((r) => ({
       id: r.id, title: r.title, price: r.price, rentalPrice: r.rental_price,
       images: JSON.parse(r.images || '[]'), status: r.status, listingType: r.listing_type,
-      categoryName: r.category_name, sellerName: r.seller_name,
+      categoryName: r.category_name, categorySlug: r.category_slug, sellerName: r.seller_name,
+      ticketType: r.ticket_type, travelDate: r.travel_date,
+      departureLocation: r.departure_location, destinationLocation: r.destination_location,
+      propertyType: r.property_type, locality: r.locality, city: r.city,
     })),
   });
 });

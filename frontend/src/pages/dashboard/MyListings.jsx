@@ -56,8 +56,9 @@ export default function MyListings() {
               <td className="px-4 py-3"><span className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${STATUS_STYLE[l.status]}`}>{l.status}</span></td>
               <td className="px-4 py-3">{l.views}</td>
               <td className="px-4 py-3">{l.saves}</td>
-              <td className="px-4 py-3 text-right">
-                <button onClick={() => remove(l.id)} className="text-xs font-medium text-clay-500">Delete</button>
+              <td className="px-4 py-3 text-right whitespace-nowrap">
+                <Link to={`/dashboard/listings/${l.id}/edit`} className="mr-3 text-xs font-medium text-bazaar-600 hover:text-bazaar-700">Edit</Link>
+                <button onClick={() => remove(l.id)} className="text-xs font-medium text-clay-500 hover:text-clay-600">Delete</button>
               </td>
             </tr>
           ))}
