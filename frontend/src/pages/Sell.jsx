@@ -246,14 +246,28 @@ export default function Sell() {
     setSubmitting(true);
     setError('');
     try {
-      const res = await api.post('/listings', {
-        ...form,
+      // Build a clean payload — only send fields relevant to the chosen listingType.
+      // Do NOT spread the whole form object, which would leak rental/property/ticket
+      // fields (rentalPrice, rentalPeriod, propertyType, city, locality, etc.)
+      // into a sell or exchange listing and cause it to be mis-categorised.
+      const payload = {
+        title: form.title.trim(),
+        categoryId: form.categoryId,
+        listingType: form.listingType,
+        condition: form.condition,
+        description: form.description.trim(),
+        campus: form.campus.trim(),
+        images: form.images,
+        // Price fields — only populate the one that matches the listing type
         price: form.listingType === 'sell' ? Number(form.price) : undefined,
+        originalPrice: form.listingType === 'sell' && form.originalPrice ? Number(form.originalPrice) : undefined,
         rentalPrice: form.listingType === 'rent' ? Number(form.rentalPrice) : undefined,
-        securityDeposit: form.securityDeposit ? Number(form.securityDeposit) : undefined,
-        originalPrice: form.originalPrice ? Number(form.originalPrice) : undefined,
+        rentalPeriod: form.listingType === 'rent' ? form.rentalPeriod : undefined,
+        securityDeposit: form.listingType === 'rent' && form.securityDeposit ? Number(form.securityDeposit) : undefined,
+        exchangeFor: form.listingType === 'exchange' ? form.exchangeFor.trim() : undefined,
         purchaseYear: form.purchaseYear ? Number(form.purchaseYear) : undefined,
-      });
+      };
+      const res = await api.post('/listings', payload);
       navigate(`/listing/${res.listing.id}`);
     } catch (err) {
       setError(err.message);
@@ -1147,22 +1161,120 @@ export default function Sell() {
             )}
 
             {step === 4 && (
-              <div>
-                <p className="text-sm font-medium">Preview Listing</p>
-                <div className="mt-3 overflow-hidden rounded-lg border border-line">
-                  {form.images[0] && <img src={form.images[0]} alt="" className="aspect-video w-full object-cover" />}
-                  <div className="p-4">
-                    <p className="font-display text-lg font-semibold">{form.title || 'Untitled listing'}</p>
-                    <p className="text-bazaar-600 font-display font-semibold">
-                      {form.listingType === 'sell' && form.price && `₹${Number(form.price).toLocaleString('en-IN')}`}
-                      {form.listingType === 'rent' && form.rentalPrice && `₹${Number(form.rentalPrice).toLocaleString('en-IN')} ${form.rentalPeriod.replace('per-', '/ ')}`}
-                      {form.listingType === 'exchange' && 'Exchange only'}
-                    </p>
-                    <p className="mt-2 text-sm text-ink-soft">{form.description}</p>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-semibold">Preview your listing</p>
+                  <p className="text-xs text-ink-soft">This is how your listing will appear to buyers on CampusBazaar.</p>
+                </div>
+
+                <div className="overflow-hidden rounded-xl border border-line bg-white shadow-xs">
+                  {/* Cover Image */}
+                  {form.images.length > 0 ? (
+                    <div className="relative aspect-video w-full overflow-hidden bg-paper">
+                      <img src={form.images[0]} alt="Cover" className="h-full w-full object-cover" />
+                      {form.images.length > 1 && (
+                        <span className="absolute bottom-2 right-2 rounded-full bg-ink/70 px-2.5 py-1 text-xs font-medium text-paper">
+                          +{form.images.length - 1} more
+                        </span>
+                      )}
+                      <div className="absolute top-2 left-2">
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${
+                          form.listingType === 'sell' ? 'bg-bazaar-500 text-paper' :
+                          form.listingType === 'rent' ? 'bg-emerald-700 text-paper' :
+                          'bg-mustard-400 text-ink'
+                        }`}>
+                          {form.listingType === 'sell' ? 'For Sale' : form.listingType === 'rent' ? 'For Rent' : 'Exchange'}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex aspect-video w-full items-center justify-center bg-paper/60 text-ink-soft">
+                      <p className="text-xs">No photos added</p>
+                    </div>
+                  )}
+
+                  {/* Listing Details */}
+                  <div className="p-4 space-y-3">
+                    <div>
+                      <p className="font-display text-lg font-semibold text-ink leading-tight">{form.title || 'Untitled listing'}</p>
+                      <p className="mt-0.5 text-xs text-ink-soft capitalize">{form.condition} condition{form.campus ? ` · ${form.campus}` : ''}</p>
+                    </div>
+
+                    {/* Price */}
+                    <div className="flex items-baseline gap-2">
+                      {form.listingType === 'sell' && form.price && (
+                        <>
+                          <span className="font-display text-2xl font-bold text-bazaar-600">
+                            ₹{Number(form.price).toLocaleString('en-IN')}
+                          </span>
+                          {form.originalPrice && Number(form.originalPrice) > Number(form.price) && (
+                            <span className="text-sm text-ink-soft line-through">
+                              ₹{Number(form.originalPrice).toLocaleString('en-IN')}
+                            </span>
+                          )}
+                          {form.originalPrice && Number(form.originalPrice) > Number(form.price) && (
+                            <span className="rounded bg-bazaar-50 px-1.5 py-0.5 text-xs font-semibold text-bazaar-600">
+                              {Math.round((1 - Number(form.price) / Number(form.originalPrice)) * 100)}% off
+                            </span>
+                          )}
+                        </>
+                      )}
+                      {form.listingType === 'rent' && form.rentalPrice && (
+                        <span className="font-display text-2xl font-bold text-emerald-700">
+                          ₹{Number(form.rentalPrice).toLocaleString('en-IN')}
+                          <span className="text-base font-medium text-ink-soft ml-1">{form.rentalPeriod.replace('per-', '/ ')}</span>
+                        </span>
+                      )}
+                      {form.listingType === 'exchange' && (
+                        <span className="font-display text-lg font-bold text-mustard-600">Exchange Only</span>
+                      )}
+                    </div>
+
+                    {form.listingType === 'exchange' && form.exchangeFor && (
+                      <p className="rounded-md border border-line bg-paper/60 px-3 py-2 text-sm text-ink-soft">
+                        <span className="font-medium text-ink">Looking for: </span>{form.exchangeFor}
+                      </p>
+                    )}
+
+                    {form.listingType === 'rent' && form.securityDeposit && (
+                      <p className="text-xs text-ink-soft">
+                        Security deposit: <span className="font-medium text-ink">₹{Number(form.securityDeposit).toLocaleString('en-IN')}</span>
+                      </p>
+                    )}
+
+                    {/* Description */}
+                    {form.description && (
+                      <div className="border-t border-line pt-3">
+                        <p className="text-xs font-semibold text-ink-soft mb-1">Description</p>
+                        <p className="text-sm text-ink leading-relaxed whitespace-pre-line">{form.description}</p>
+                      </div>
+                    )}
+
+                    {/* Image thumbnails row */}
+                    {form.images.length > 1 && (
+                      <div className="border-t border-line pt-3">
+                        <p className="text-xs font-semibold text-ink-soft mb-2">All Photos ({form.images.length})</p>
+                        <div className="flex gap-2 overflow-x-auto">
+                          {form.images.map((img, idx) => (
+                            <img key={idx} src={img} alt={`Photo ${idx + 1}`} className="h-16 w-16 flex-shrink-0 rounded-md object-cover border border-line" />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="border-t border-line pt-3 flex items-center gap-2 text-xs text-ink-soft">
+                      <span className="rounded-full bg-paper border border-line px-2.5 py-1 font-medium text-ink">{form.condition}</span>
+                      {form.purchaseYear && <span>Purchased in {form.purchaseYear}</span>}
+                    </div>
                   </div>
                 </div>
+
+                <p className="text-xs text-center text-ink-soft">
+                  Ready to go live? Click <span className="font-semibold text-bazaar-600">Publish listing</span> to make it visible to campus buyers.
+                </p>
               </div>
             )}
+
           </div>
 
           <div className="mt-4 flex justify-between">
